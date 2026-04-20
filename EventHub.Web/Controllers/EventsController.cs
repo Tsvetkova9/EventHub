@@ -234,10 +234,50 @@ namespace EventHub.Web.Controllers
             return RedirectToAction(nameof(Details), new { id = ev.Id });
         }
 
+        [Authorize]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var ev = await _eventService.GetByIdAsync(id);
+            if (ev == null)
+            {
+                return NotFound();
+            }
+
+            var userId = _userManager.GetUserId(User);
+            if (ev.OrganizerId != userId && !User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
+            // load category/venue names for the confirmation page
+            var categories = await _categoryService.GetAllAsync();
+            var venues = await _venueService.GetAllAsync();
+            var category = categories.FirstOrDefault(c => c.Id == ev.CategoryId);
+            var venue = venues.FirstOrDefault(v => v.Id == ev.VenueId);
+
+            var model = new EventItemViewModel
+            {
+                Id = ev.Id,
+                Title = ev.Title,
+                Description = ev.Description.Length > 150
+                    ? ev.Description.Substring(0, 150) + "..."
+                    : ev.Description,
+                StartDate = ev.StartDate,
+                TicketPrice = ev.TicketPrice,
+                AvailableTickets = ev.AvailableTickets,
+                CategoryName = category?.Name ?? "",
+                VenueName = venue?.Name ?? "",
+                City = venue?.City ?? ""
+            };
+
+            return View(model);
+        }
+
         [HttpPost]
         [Authorize]
+        [ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var ev = await _eventService.GetByIdAsync(id);
             if (ev == null)

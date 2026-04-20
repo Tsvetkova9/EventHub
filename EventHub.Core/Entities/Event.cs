@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EventHub.Core.Entities
 {
@@ -22,7 +21,6 @@ namespace EventHub.Core.Entities
 
         public DateTime EndDate { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
         [Range(0, double.MaxValue)]
         public decimal TicketPrice { get; set; }
 

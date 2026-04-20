@@ -89,7 +89,7 @@ namespace EventHub.Web.Controllers
             {
                 await _ticketService.PurchaseTicketAsync(model.EventId, userId, model.Quantity);
                 TempData["Success"] = "Ticket purchased successfully!";
-                return RedirectToAction(nameof(MyTickets));
+                return RedirectToAction(nameof(Success));
             }
             catch (InvalidOperationException ex)
             {
@@ -97,6 +97,11 @@ namespace EventHub.Web.Controllers
                 TempData["Error"] = ex.Message;
                 return RedirectToAction("Details", "Events", new { id = model.EventId });
             }
+        }
+
+        public IActionResult Success()
+        {
+            return View();
         }
 
         [HttpPost]

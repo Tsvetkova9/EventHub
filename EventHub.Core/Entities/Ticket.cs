@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using EventHub.Core.Enums;
 
 namespace EventHub.Core.Entities
@@ -13,7 +12,6 @@ namespace EventHub.Core.Entities
         [Range(1, 10)]
         public int Quantity { get; set; } = 1;
 
-        [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPrice { get; set; }
 
         public TicketStatus Status { get; set; } = TicketStatus.Active;
