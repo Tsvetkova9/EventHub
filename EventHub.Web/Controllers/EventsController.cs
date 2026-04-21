@@ -283,5 +283,23 @@ namespace EventHub.Web.Controllers
             var isFav = await _favoriteService.IsFavoriteAsync(id, userId);
             return Json(new { isFavorited = isFav });
         }
+
+        [Authorize]
+        public async Task<IActionResult> Favorites()
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var favoriteIds = (await _favoriteService.GetFavoriteEventIdsAsync(userId)).ToHashSet();
+
+            var allEvents = await _eventService.GetAllAsync();
+            var favoriteEvents = allEvents.Where(e => favoriteIds.Contains(e.Id));
+
+            var model = _mapper.Map<IEnumerable<EventItemViewModel>>(favoriteEvents).ToList();
+
+            // every event on this page is already favorited
+            foreach (var ev in model)
+                ev.IsFavorited = true;
+
+            return View(model);
+        }
     }
 }
