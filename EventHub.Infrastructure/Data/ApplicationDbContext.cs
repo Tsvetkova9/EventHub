@@ -16,6 +16,7 @@ namespace EventHub.Infrastructure.Data
         public DbSet<Venue> Venues { get; set; } = null!;
         public DbSet<Ticket> Tickets { get; set; } = null!;
         public DbSet<Review> Reviews { get; set; } = null!;
+        public DbSet<UserFavoriteEvent> UserFavoriteEvents { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -76,6 +77,22 @@ namespace EventHub.Infrastructure.Data
 
             builder.Entity<Event>()
                 .HasIndex(e => e.IsActive);
+
+            // UserFavoriteEvent — composite primary key
+            builder.Entity<UserFavoriteEvent>()
+                .HasKey(f => new { f.UserId, f.EventId });
+
+            builder.Entity<UserFavoriteEvent>()
+                .HasOne(f => f.User)
+                .WithMany(u => u.FavoriteEvents)
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserFavoriteEvent>()
+                .HasOne(f => f.Event)
+                .WithMany(e => e.FavoritedBy)
+                .HasForeignKey(f => f.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
