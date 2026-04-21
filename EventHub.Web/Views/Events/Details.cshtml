@@ -45,11 +45,42 @@
 
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <a asp-controller="Reviews" asp-action="Create" asp-route-eventId="@Model.Id" class="btn btn-outline-primary btn-sm mb-3">
+            <button class="btn btn-outline-primary btn-sm mb-3" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#reviewForm" aria-expanded="false">
                 <i class="bi bi-pencil"></i> Write a Review
-            </a>
+            </button>
+
+            <div class="collapse mb-3" id="reviewForm">
+                <div class="card card-body border-0 bg-light">
+                    <h6>Your Review</h6>
+                    <form id="ajaxReviewForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="EventId" value="@Model.Id" />
+                        <input type="hidden" name="EventTitle" value="@Model.Title" />
+                        <div class="mb-2">
+                            <label class="form-label small">Rating</label>
+                            <select name="Rating" class="form-select form-select-sm w-auto" required>
+                                <option value="">— pick —</option>
+                                <option value="5">★★★★★ (5)</option>
+                                <option value="4">★★★★☆ (4)</option>
+                                <option value="3">★★★☆☆ (3)</option>
+                                <option value="2">★★☆☆☆ (2)</option>
+                                <option value="1">★☆☆☆☆ (1)</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Comment</label>
+                            <textarea name="Content" class="form-control form-control-sm" rows="3"
+                                      maxlength="1000" placeholder="Share your experience..." required></textarea>
+                        </div>
+                        <div id="reviewError" class="text-danger small mb-2" style="display:none;"></div>
+                        <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+                    </form>
+                </div>
+            </div>
         }
 
+        <div id="reviews-list">
         @if (Model.Reviews.Any())
         {
             @foreach (var review in Model.Reviews)
@@ -91,8 +122,88 @@
         }
         else
         {
-            <p class="text-muted">No reviews yet. Be the first to share your thoughts!</p>
+            <p class="text-muted" id="no-reviews-msg">No reviews yet. Be the first to share your thoughts!</p>
         }
+        </div>
+
+<script>
+(function () {
+    const form = document.getElementById('ajaxReviewForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const token = form.querySelector('[name="__RequestVerificationToken"]').value;
+        const payload = {
+            EventId: parseInt(form.querySelector('[name="EventId"]').value),
+            EventTitle: form.querySelector('[name="EventTitle"]').value,
+            Rating: parseInt(form.querySelector('[name="Rating"]').value),
+            Content: form.querySelector('[name="Content"]').value
+        };
+
+        const errBox = document.getElementById('reviewError');
+        errBox.style.display = 'none';
+
+        try {
+            const res = await fetch('/Reviews/CreateAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                errBox.textContent = (err.errors || ['An error occurred.']).join(' ');
+                errBox.style.display = '';
+                return;
+            }
+
+            const data = await res.json();
+            if (!data.success) {
+                errBox.textContent = 'Could not submit review.';
+                errBox.style.display = '';
+                return;
+            }
+
+            // build rating stars html
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += i <= data.review.rating
+                    ? '<i class="bi bi-star-fill text-warning"></i>'
+                    : '<i class="bi bi-star text-warning"></i>';
+            }
+
+            const card = `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <strong>${data.review.userName}</strong>
+                            <small class="text-muted">${data.review.createdOn}</small>
+                        </div>
+                        <div class="mb-1">${stars}</div>
+                        <p class="mb-1">${data.review.content}</p>
+                    </div>
+                </div>`;
+
+            const noMsg = document.getElementById('no-reviews-msg');
+            if (noMsg) noMsg.remove();
+
+            document.getElementById('reviews-list').insertAdjacentHTML('afterbegin', card);
+
+            // collapse form and reset
+            bootstrap.Collapse.getOrCreateInstance(document.getElementById('reviewForm')).hide();
+            form.reset();
+        } catch (ex) {
+            errBox.textContent = 'Network error. Please try again.';
+            errBox.style.display = '';
+        }
+    });
+})();
+</script>
     </div>
 
     <!-- right column - sidebar -->

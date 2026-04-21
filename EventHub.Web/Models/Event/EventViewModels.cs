@@ -26,6 +26,7 @@ namespace EventHub.Web.Models.Event
         public string CategoryName { get; set; } = string.Empty;
         public string VenueName { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
+        public bool IsFavorited { get; set; }
     }
 
     public class EventDetailsViewModel
