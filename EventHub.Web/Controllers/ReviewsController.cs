@@ -86,5 +86,49 @@ namespace EventHub.Web.Controllers
 
             return RedirectToAction("Details", "Events", new { id = eventId });
         }
+
+        /// <summary>AJAX endpoint — returns JSON so the Details page can prepend the new review without a full reload.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAjax([FromBody] CreateReviewViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage);
+                return BadRequest(new { success = false, errors });
+            }
+
+            var userId = _userManager.GetUserId(User)!;
+
+            var review = new Core.Entities.Review
+            {
+                EventId = model.EventId,
+                UserId = userId,
+                Content = model.Content,
+                Rating = model.Rating
+            };
+
+            await _reviewService.CreateAsync(review);
+
+            // load user display name for the returned card
+            var user = await _userManager.FindByIdAsync(userId);
+            var userName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown";
+
+            return Ok(new
+            {
+                success = true,
+                review = new
+                {
+                    id = review.Id,
+                    content = review.Content,
+                    rating = review.Rating,
+                    createdOn = review.CreatedOn.ToString("MMM dd, yyyy"),
+                    userName,
+                    userId
+                }
+            });
+        }
     }
 }

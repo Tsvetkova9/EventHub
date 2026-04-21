@@ -1,10 +1,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using QuestPDF.Infrastructure;
 using EventHub.Core.Entities;
 using EventHub.Core.Interfaces;
 using EventHub.Core.Services;
 using EventHub.Infrastructure.Data;
 using EventHub.Infrastructure.Repositories;
+using EventHub.Web.Infrastructure;
+using EventHub.Web.Infrastructure.Middlewares;
+
+// QuestPDF community license — free for non-commercial and open-source projects
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +43,10 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+
+// AutoMapper — scan this assembly for MappingProfile
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(); // needed for Identity UI
@@ -62,6 +73,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseCustomExceptionMiddleware();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

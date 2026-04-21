@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,9 @@ namespace EventHub.Web.Controllers
         private readonly ICategoryService _categoryService;
         private readonly IVenueService _venueService;
         private readonly IReviewService _reviewService;
+        private readonly IFavoriteService _favoriteService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IMapper _mapper;
 
         private const int PageSize = 6;
 
@@ -23,19 +26,34 @@ namespace EventHub.Web.Controllers
             ICategoryService categoryService,
             IVenueService venueService,
             IReviewService reviewService,
-            UserManager<ApplicationUser> userManager)
+            IFavoriteService favoriteService,
+            UserManager<ApplicationUser> userManager,
+            IMapper mapper)
         {
             _eventService = eventService;
             _categoryService = categoryService;
             _venueService = venueService;
             _reviewService = reviewService;
+            _favoriteService = favoriteService;
             _userManager = userManager;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index(string? searchTerm, int? categoryId, int page = 1)
         {
             var (events, totalCount) = await _eventService.GetPagedAsync(searchTerm, categoryId, page, PageSize);
             var categories = await _categoryService.GetAllAsync();
+
+            // AutoMapper handles field projection; IsFavorited is set below for logged-in users
+            var mappedEvents = _mapper.Map<IEnumerable<EventItemViewModel>>(events).ToList();
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = _userManager.GetUserId(User)!;
+                var favoriteIds = (await _favoriteService.GetFavoriteEventIdsAsync(userId)).ToHashSet();
+                foreach (var ev in mappedEvents)
+                    ev.IsFavorited = favoriteIds.Contains(ev.Id);
+            }
 
             var model = new EventListViewModel
             {
@@ -44,27 +62,8 @@ namespace EventHub.Web.Controllers
                 CurrentPage = page,
                 TotalCount = totalCount,
                 TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize),
-                Categories = categories.Select(c => new CategoryOptionViewModel
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                }),
-                Events = events.Select(e => new EventItemViewModel
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    Description = e.Description.Length > 150
-                        ? e.Description.Substring(0, 150) + "..."
-                        : e.Description,
-                    ImageUrl = e.ImageUrl,
-                    StartDate = e.StartDate,
-                    EndDate = e.EndDate,
-                    TicketPrice = e.TicketPrice,
-                    AvailableTickets = e.AvailableTickets,
-                    CategoryName = e.Category.Name,
-                    VenueName = e.Venue.Name,
-                    City = e.Venue.City
-                })
+                Categories = categories.Select(c => new CategoryOptionViewModel { Id = c.Id, Name = c.Name }),
+                Events = mappedEvents
             };
 
             return View(model);
@@ -80,33 +79,9 @@ namespace EventHub.Web.Controllers
 
             var avgRating = await _reviewService.GetAverageRatingForEventAsync(id);
 
-            var model = new EventDetailsViewModel
-            {
-                Id = ev.Id,
-                Title = ev.Title,
-                Description = ev.Description,
-                ImageUrl = ev.ImageUrl,
-                StartDate = ev.StartDate,
-                EndDate = ev.EndDate,
-                TicketPrice = ev.TicketPrice,
-                AvailableTickets = ev.AvailableTickets,
-                IsActive = ev.IsActive,
-                CategoryName = ev.Category.Name,
-                VenueName = ev.Venue.Name,
-                VenueAddress = ev.Venue.Address,
-                City = ev.Venue.City,
-                OrganizerName = $"{ev.Organizer.FirstName} {ev.Organizer.LastName}",
-                AverageRating = avgRating,
-                Reviews = ev.Reviews.Select(r => new ReviewItemViewModel
-                {
-                    Id = r.Id,
-                    Content = r.Content,
-                    Rating = r.Rating,
-                    CreatedOn = r.CreatedOn,
-                    UserName = $"{r.User.FirstName} {r.User.LastName}",
-                    UserId = r.UserId
-                })
-            };
+            var model = _mapper.Map<EventDetailsViewModel>(ev);
+            model.AverageRating = avgRating;
+            model.Reviews = _mapper.Map<IEnumerable<ReviewItemViewModel>>(ev.Reviews);
 
             return View(model);
         }
@@ -237,7 +212,7 @@ namespace EventHub.Web.Controllers
         [Authorize]
         public async Task<IActionResult> Delete(int id)
         {
-            var ev = await _eventService.GetByIdAsync(id);
+            var ev = await _eventService.GetByIdWithDetailsAsync(id);
             if (ev == null)
             {
                 return NotFound();
@@ -249,26 +224,7 @@ namespace EventHub.Web.Controllers
                 return Forbid();
             }
 
-            // load category/venue names for the confirmation page
-            var categories = await _categoryService.GetAllAsync();
-            var venues = await _venueService.GetAllAsync();
-            var category = categories.FirstOrDefault(c => c.Id == ev.CategoryId);
-            var venue = venues.FirstOrDefault(v => v.Id == ev.VenueId);
-
-            var model = new EventItemViewModel
-            {
-                Id = ev.Id,
-                Title = ev.Title,
-                Description = ev.Description.Length > 150
-                    ? ev.Description.Substring(0, 150) + "..."
-                    : ev.Description,
-                StartDate = ev.StartDate,
-                TicketPrice = ev.TicketPrice,
-                AvailableTickets = ev.AvailableTickets,
-                CategoryName = category?.Name ?? "",
-                VenueName = venue?.Name ?? "",
-                City = venue?.City ?? ""
-            };
+            var model = _mapper.Map<EventItemViewModel>(ev);
 
             return View(model);
         }
@@ -314,6 +270,18 @@ namespace EventHub.Web.Controllers
                 Id = v.Id,
                 Name = v.Name
             });
+        }
+
+        /// <summary>Toggle favorite status for the current user (AJAX-friendly).</summary>
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleFavorite(int id)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            await _favoriteService.ToggleFavoriteAsync(id, userId);
+            var isFav = await _favoriteService.IsFavoriteAsync(id, userId);
+            return Json(new { isFavorited = isFav });
         }
     }
 }

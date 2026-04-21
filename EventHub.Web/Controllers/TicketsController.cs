@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 using EventHub.Core.Entities;
 using EventHub.Core.Interfaces;
+using EventHub.Web.Infrastructure;
 using EventHub.Web.Models.Ticket;
 
 namespace EventHub.Web.Controllers
@@ -122,6 +125,25 @@ namespace EventHub.Web.Controllers
             }
 
             return RedirectToAction(nameof(MyTickets));
+        }
+
+        /// <summary>Generate and download a PDF version of the ticket.</summary>
+        public async Task<IActionResult> DownloadTicket(int id)
+        {
+            var userId = _userManager.GetUserId(User)!;
+            var tickets = await _ticketService.GetTicketsByUserAsync(userId);
+
+            // users can only download their own tickets
+            var ticket = tickets.FirstOrDefault(t => t.Id == id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var document = new TicketDocument(ticket);
+            var pdfBytes = document.GeneratePdf();
+
+            return File(pdfBytes, "application/pdf", $"EventHub-Ticket-{ticket.Id}.pdf");
         }
     }
 }
