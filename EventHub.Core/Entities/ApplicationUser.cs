@@ -23,5 +23,7 @@ namespace EventHub.Core.Entities
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
         public ICollection<Event> OrganizedEvents { get; set; } = new List<Event>();
+
+        public ICollection<UserFavoriteEvent> FavoriteEvents { get; set; } = new List<UserFavoriteEvent>();
     }
 }
