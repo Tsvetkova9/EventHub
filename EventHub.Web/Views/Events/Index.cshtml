@@ -68,7 +68,17 @@
                             <p class="mb-2 small"><i class="bi bi-geo-alt"></i> @ev.VenueName, @ev.City</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fw-bold text-success fs-5">@ev.TicketPrice.ToString("C")</span>
-                                <a asp-action="Details" asp-route-id="@ev.Id" class="btn btn-primary btn-sm">Details</a>
+                                <div class="d-flex gap-2 align-items-center">
+                                    @if (User.Identity?.IsAuthenticated == true)
+                                    {
+                                        <button class="btn btn-sm btn-link p-0 favorite-btn"
+                                                data-event-id="@ev.Id"
+                                                title="@(ev.IsFavorited ? "Remove from favorites" : "Add to favorites")">
+                                            <i class="bi @(ev.IsFavorited ? "bi-heart-fill text-danger" : "bi-heart text-secondary") fs-5"></i>
+                                        </button>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@ev.Id" class="btn btn-primary btn-sm">Details</a>
+                                </div>
                             </div>
                             @if (ev.AvailableTickets == 0)
                             {
@@ -122,4 +132,43 @@
             </li>
         </ul>
     </nav>
+}
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    @Html.AntiForgeryToken()
+    <script>
+    (function () {
+        const token = document.querySelector('[name="__RequestVerificationToken"]')?.value;
+
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const eventId = this.dataset.eventId;
+                const icon = this.querySelector('i');
+
+                try {
+                    const res = await fetch('/Events/ToggleFavorite', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: `id=${eventId}`
+                    });
+
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (data.isFavorited) {
+                        icon.className = 'bi bi-heart-fill text-danger fs-5';
+                        this.title = 'Remove from favorites';
+                    } else {
+                        icon.className = 'bi bi-heart text-secondary fs-5';
+                        this.title = 'Add to favorites';
+                    }
+                } catch { /* silent fail */ }
+            });
+        });
+    })();
+    </script>
 }
