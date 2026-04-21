@@ -1,0 +1,53 @@
+@model CreateReviewViewModel
+@{
+    ViewData["Title"] = "Write a Review";
+}
+
+<h1>Write a Review</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5>Reviewing: <strong>@Model.EventTitle</strong></h5>
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="EventId" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Rating" class="form-label">Rating</label>
+                        <select asp-for="Rating" class="form-select" style="max-width: 200px;">
+                            <option value="">-- Select Rating --</option>
+                            <option value="5">★★★★★ (5 - Excellent)</option>
+                            <option value="4">★★★★☆ (4 - Very Good)</option>
+                            <option value="3">★★★☆☆ (3 - Good)</option>
+                            <option value="2">★★☆☆☆ (2 - Fair)</option>
+                            <option value="1">★☆☆☆☆ (1 - Poor)</option>
+                        </select>
+                        <span asp-validation-for="Rating" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label">Your Review</label>
+                        <textarea asp-for="Content" class="form-control" rows="5"
+                                  placeholder="Share your experience..."></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Submit Review
+                    </button>
+                    <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId"
+                       class="btn btn-secondary ms-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

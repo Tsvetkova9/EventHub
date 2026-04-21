@@ -73,6 +73,10 @@ namespace EventHub.Core.Services
 
         public async Task<IEnumerable<Event>> GetUpcomingEventsAsync(int count)
         {
+            // added null check for count - forgot this earlier, caused weird results with count=0
+            if (count <= 0)
+                return Enumerable.Empty<Event>();
+
             return await _eventRepository.GetQueryable()
                 .Include(e => e.Category)
                 .Include(e => e.Venue)

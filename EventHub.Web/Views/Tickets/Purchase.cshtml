@@ -1,0 +1,44 @@
+@model PurchaseTicketViewModel
+@{
+    ViewData["Title"] = "Purchase Tickets";
+}
+
+<h1>Purchase Tickets</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-cart"></i> Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <h4>@Model.EventTitle</h4>
+                <p class="text-muted">Price per ticket: <strong>@Model.TicketPrice.ToString("C")</strong></p>
+                <p class="text-muted">Available: <strong>@Model.AvailableTickets</strong> tickets</p>
+
+                <form asp-action="Purchase" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="EventId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Quantity" class="form-label">Number of Tickets</label>
+                        <input asp-for="Quantity" class="form-control" type="number" min="1" max="10"
+                               style="max-width: 150px;" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-credit-card"></i> Complete Purchase
+                    </button>
+                    <a asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId"
+                       class="btn btn-outline-secondary ms-2">Go Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
