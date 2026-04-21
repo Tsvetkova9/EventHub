@@ -83,12 +83,12 @@ namespace EventHub.Infrastructure.Data
 
             var categories = new List<Category>
             {
-                new() { Name = "Music", Description = "Live concerts, festivals, and music performances", ImageUrl = "/images/categories/music.jpg" },
-                new() { Name = "Technology", Description = "Tech conferences, hackathons, and workshops", ImageUrl = "/images/categories/technology.jpg" },
-                new() { Name = "Sports", Description = "Sporting events, tournaments, and competitions", ImageUrl = "/images/categories/sports.jpg" },
-                new() { Name = "Arts & Culture", Description = "Art exhibitions, theater, and cultural festivals", ImageUrl = "/images/categories/arts.jpg" },
-                new() { Name = "Food & Drink", Description = "Food festivals, wine tastings, and culinary events", ImageUrl = "/images/categories/food.jpg" },
-                new() { Name = "Business", Description = "Networking events, seminars, and business conferences", ImageUrl = "/images/categories/business.jpg" }
+                new() { Name = "Music", Description = "Live concerts, festivals, and music performances", ImageUrl = "https://picsum.photos/seed/musiccat/600/400" },
+                new() { Name = "Technology", Description = "Tech conferences, hackathons, and workshops", ImageUrl = "https://picsum.photos/seed/techcat/600/400" },
+                new() { Name = "Sports", Description = "Sporting events, tournaments, and competitions", ImageUrl = "https://picsum.photos/seed/sportscat/600/400" },
+                new() { Name = "Arts & Culture", Description = "Art exhibitions, theater, and cultural festivals", ImageUrl = "https://picsum.photos/seed/artscat/600/400" },
+                new() { Name = "Food & Drink", Description = "Food festivals, wine tastings, and culinary events", ImageUrl = "https://picsum.photos/seed/foodcat/600/400" },
+                new() { Name = "Business", Description = "Networking events, seminars, and business conferences", ImageUrl = "https://picsum.photos/seed/businesscat/600/400" }
             };
 
             context.Categories.AddRange(categories);
@@ -132,7 +132,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 1,
                     VenueId = 1,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/music-festival.jpg"
+                    ImageUrl = "https://picsum.photos/seed/musicfestival/600/400"
                 },
                 new()
                 {
@@ -146,7 +146,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 2,
                     VenueId = 2,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/devconf.jpg"
+                    ImageUrl = "https://picsum.photos/seed/devconf2026/600/400"
                 },
                 new()
                 {
@@ -160,7 +160,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 3,
                     VenueId = 3,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/marathon.jpg"
+                    ImageUrl = "https://picsum.photos/seed/citymarathon/600/400"
                 },
                 new()
                 {
@@ -174,7 +174,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 4,
                     VenueId = 4,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/art-exhibition.jpg"
+                    ImageUrl = "https://picsum.photos/seed/artexhibition/600/400"
                 },
                 new()
                 {
@@ -188,7 +188,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 5,
                     VenueId = 3,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/food-festival.jpg"
+                    ImageUrl = "https://picsum.photos/seed/streetfood/600/400"
                 },
                 new()
                 {
@@ -202,7 +202,7 @@ namespace EventHub.Infrastructure.Data
                     CategoryId = 6,
                     VenueId = 2,
                     OrganizerId = organizerId,
-                    ImageUrl = "/images/events/networking.jpg"
+                    ImageUrl = "https://picsum.photos/seed/startupnight/600/400"
                 }
             };
 
